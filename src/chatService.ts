@@ -4,7 +4,6 @@ import { chatRooms } from "./data/chatRooms";
 
 export class ChatService {
   public chatServer: SocketIO.Server;
-  public socket: SocketIO.Socket;
   public newMessageEventName: string;
 
   constructor({
@@ -26,6 +25,12 @@ export class ChatService {
     this.setupConnection();
   }
 
+  public close(callback: Function): void {
+    this.chatServer.close(() => {
+      callback();
+    });
+  }
+
   private setupChatService(server, port, acceptableOrigins): void {
     this.chatServer = io(server);
     server.listen(port);
@@ -35,19 +40,19 @@ export class ChatService {
       }
       callback(null, true);
     });
-    console.log(`Server is up and listening at ${process.env.PORT}`);
+    console.log(`Server is up and listening at ${port}`);
   }
 
   private setupConnection(): void {
     this.chatServer.on("connection", (socket) => {
-      this.socket = socket;
+      console.log("Client has connected");
 
       this.setupChatRooms(socket);
 
       this.handleIncomingMessages(socket);
 
-      this.socket.on("disconnect", () => {
-        console.log("user disconnected");
+      socket.on("disconnect", () => {
+        console.log("client disconnected");
       });
     });
   }
