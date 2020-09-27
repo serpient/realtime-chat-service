@@ -1,6 +1,7 @@
 import io from "socket.io";
 import * as http from "http";
-import { chatRooms } from "./data/chatRooms";
+import { chatRooms, chatRoomIsValid } from "./data/chatRooms";
+import { IncomingMessage } from "./data/types";
 
 export class ChatService {
   public chatServer: SocketIO.Server;
@@ -28,11 +29,13 @@ export class ChatService {
     this.setupConnection();
   }
 
-  public close = (callback: Function): void => {
-    this.chatServer.close(() => {
-      this.server.close(() => {
-        console.log("ChatServer & HTTP Server closed");
-        callback();
+  public close = (callback: Function): Promise<void> => {
+    return new Promise((resolve) => {
+      this.chatServer.close(() => {
+        this.server.close(() => {
+          console.log("ChatServer & HTTP Server closed");
+          resolve();
+        });
       });
     });
   };
@@ -75,13 +78,26 @@ export class ChatService {
 
   private handleIncomingMessages = (socket: SocketIO.Socket): void => {
     // TODO handling of message that dont match schema
-    socket.on(this.newMessageEventName, (data) => {
+    socket.on(this.newMessageEventName, (data: IncomingMessage) => {
       console.log(data);
       const { chatRoom } = data;
-      this.chatServer.in(chatRoom.name).emit(chatRoom.name, {
-        ...data,
-        serverTimestamp: new Date().toISOString(),
-      });
+      if (chatRoomIsValid(chatRoom)) {
+        this.chatServer.in(chatRoom.name).emit(chatRoom.name, {
+          data: {
+            ...data,
+            serverTimestamp: new Date().toISOString(),
+          },
+          error: null,
+        });
+      } else {
+        this.chatServer.emit("server_error", {
+          data: null,
+          error: {
+            status: 404,
+            message: "Chat room does not exist",
+          },
+        });
+      }
     });
   };
 }

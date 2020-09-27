@@ -1,8 +1,7 @@
-import io from "socket.io-client";
 import * as http from "http";
 import { ChatService } from "./chatService";
 import { TestClient } from "./testClient";
-import { ChatRoom, OutgoingMessage } from "./data/types";
+import { ChatRoom, IncomingMessage } from "./data/types";
 
 describe("Chat Service", () => {
   let chatService;
@@ -13,6 +12,13 @@ describe("Chat Service", () => {
   const connectOptions = {
     forceNew: true,
   };
+  const chatRoom: ChatRoom = { label: "Water Tribe", name: "/waterTribe" };
+  const message: IncomingMessage = {
+    message: "Hello World",
+    chatRoom,
+  };
+  const errorListener = "server_error";
+  const errorListenerRoom = { name: errorListener, label: "" };
 
   beforeEach(() => {
     httpServer = http.createServer();
@@ -24,19 +30,12 @@ describe("Chat Service", () => {
     });
   });
 
-  afterEach((done) => {
-    chatService.close(() => {
-      done();
-    });
+  afterEach(async (done) => {
+    await chatService.close();
+    done();
   });
 
-  it("can receive and send a message back to the original chat room", (done) => {
-    const chatRoom: ChatRoom = { label: "Water Tribe", name: "/waterTribe" };
-    const message: OutgoingMessage = {
-      message: "Hello World",
-      chatRoom,
-    };
-
+  it("can receive and send a message back to the original chat room", async (done) => {
     const client1 = new TestClient({
       chatServiceEndpoint,
       newMessageEventName,
@@ -45,28 +44,71 @@ describe("Chat Service", () => {
     });
 
     client1.sendMessageToServer(message);
-    client1.checkMessageInChatRoom(chatRoom, (data) => {
-      expect(data.message).toEqual(message.message);
-      // only a single message was received for chatRoom
-      expect(client1.receivedMessages[chatRoom.name][0].message).toEqual(
-        message.message
-      );
-      // messages weren't sent to any other room
-      expect(Object.keys(client1.receivedMessages)).toEqual([chatRoom.name]);
-      expect(client1.receivedMessageCount).toEqual(1);
-      client1.disconnect();
-    });
-    client1.onDisconnect(() => {
+    await client1.waitForMessageInChatRoom(chatRoom, 1);
+    expect(client1.receivedMessages[chatRoom.name][0].data.message).toEqual(
+      message.message
+    );
+    expect(client1.receivedMessageCount).toEqual(1);
+
+    client1.disconnect();
+    Promise.all([client1.waitForDisconnect]).then(() => {
       done();
     });
   });
 
-  it("can send a message, and other users in chatRoom will receive it", (done) => {
-    const chatRoom: ChatRoom = { label: "Water Tribe", name: "/waterTribe" };
-    const message: OutgoingMessage = {
+  it("can send a message, and other users in the same chatRoom will receive it", async (done) => {
+    const client1 = new TestClient({
+      chatServiceEndpoint,
+      newMessageEventName,
+      connectOptions,
+      clientName: "Client_1",
+    });
+    const client2 = new TestClient({
+      chatServiceEndpoint,
+      newMessageEventName,
+      connectOptions,
+      clientName: "Client_2",
+    });
+    const client3 = new TestClient({
+      chatServiceEndpoint,
+      newMessageEventName,
+      connectOptions,
+      clientName: "Client_3",
+    });
+
+    client1.sendMessageToServer(message);
+    await client2.waitForMessageInChatRoom(chatRoom, 1);
+
+    client3.sendMessageToServer(message);
+    await client3.waitForMessageInChatRoom(chatRoom, 2);
+
+    expect(client3.receivedMessageCount).toEqual(2);
+    expect(client2.receivedMessageCount).toEqual(2);
+    expect(client1.receivedMessageCount).toEqual(2);
+
+    client3.disconnect();
+    client2.disconnect();
+    client1.disconnect();
+
+    Promise.all([
+      client1.waitForDisconnect,
+      client2.waitForDisconnect,
+      client3.waitForDisconnect,
+    ]).then(() => {
+      done();
+    });
+  });
+
+  it("will send back error to only the client if chat room does not exist", async (done) => {
+    const chatRoom: ChatRoom = {
+      label: "Secret Chat Room",
+      name: "/doesNotExist",
+    };
+    const message: IncomingMessage = {
       message: "Hello World",
       chatRoom,
     };
+
     const client1 = new TestClient({
       chatServiceEndpoint,
       newMessageEventName,
@@ -81,28 +123,51 @@ describe("Chat Service", () => {
     });
 
     client1.sendMessageToServer(message);
-
-    client2.checkMessageInChatRoom(chatRoom, (data) => {
-      expect(data.message).toEqual(message.message);
-      expect(client2.receivedMessages[chatRoom.name][0].message).toEqual(
-        message.message
-      );
-      expect(Object.keys(client2.receivedMessages)).toEqual([chatRoom.name]);
-      expect(client2.receivedMessageCount).toEqual(1);
-      expect(client1.receivedMessageCount).toEqual(1);
-
-      client2.disconnect();
-      client1.disconnect();
+    await client1.waitForMessageInChatRoom(errorListenerRoom, 1);
+    expect(client1.receivedMessages[errorListener][0]).toEqual({
+      error: {
+        message: "Chat room does not exist",
+        status: 404,
+      },
+      data: null,
     });
+    expect(client2.receivedMessageCount).toEqual(0);
 
-    client2.onDisconnect(() => {
-      client1.onDisconnect(() => {
+    client1.disconnect();
+    client2.disconnect();
+    Promise.all([client1.waitForDisconnect, client2.waitForDisconnect]).then(
+      () => {
         done();
-      });
-    });
+      }
+    );
   });
 
-  // should send back error if chat room does not exist
+  it("will send back error is message is missing required fields", async (done) => {
+    const badMessage = {
+      message: "Hello World",
+    };
+    const client1 = new TestClient({
+      chatServiceEndpoint,
+      newMessageEventName,
+      connectOptions,
+      clientName: "Client_1",
+    });
+
+    client1.sendMessageToServer(badMessage);
+    await client1.waitForMessageInChatRoom(errorListenerRoom, 1);
+    expect(client1.receivedMessages[errorListener][0]).toEqual({
+      error: {
+        message: "The message is missing required fields",
+        status: 404,
+      },
+      data: null,
+    });
+
+    client1.disconnect();
+    Promise.all([client1.waitForDisconnect]).then(() => {
+      done();
+    });
+  });
 
   // it("notifies all users when a new user connects", () => {});
 

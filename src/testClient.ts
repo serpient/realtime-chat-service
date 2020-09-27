@@ -1,6 +1,6 @@
 import io from "socket.io-client";
 import { OutgoingMessage, ChatRoom } from "./data/types";
-import { chatRooms } from "./data/chatRooms";
+import { chatRooms, chatRoomIsValid } from "./data/chatRooms";
 
 export class TestClient {
   public client: SocketIOClient.Socket;
@@ -47,6 +47,9 @@ export class TestClient {
       })
       .on("connect_timeout", (timeout) => {
         console.log(timeout);
+      })
+      .on("connect", () => {
+        console.log(`${this.clientName} connected`);
       });
 
     chatRooms.forEach((room) => {
@@ -69,13 +72,30 @@ export class TestClient {
     }
   };
 
-  public sendMessageToServer = (message: OutgoingMessage) => {
+  public sendMessageToServer = (message: any) => {
+    console.log(`Sending message for ${this.clientName}`);
     this.client.emit(this.newMessageEventName, message);
   };
 
-  public checkMessageInChatRoom = (chatRoom: ChatRoom, callback: Function) => {
-    this.client.on(chatRoom.name, (data) => {
-      callback(data);
+  public waitForMessageInChatRoom = (
+    chatRoom: ChatRoom,
+    messageNumber: number
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      this.client.on(chatRoom.name, (data) => {
+        console.log(
+          `Received message from ${chatRoom.name} for ${
+            this.clientName
+          }: [${JSON.stringify(data)}]`
+        );
+        if (!chatRoomIsValid(chatRoom)) {
+          this.receivedMessageCount++;
+          this.handleSavingMessages(data, chatRoom);
+        }
+        if (this.receivedMessageCount === messageNumber) {
+          resolve();
+        }
+      });
     });
   };
 
@@ -83,10 +103,12 @@ export class TestClient {
     this.client.disconnect();
   };
 
-  public onDisconnect = (callback: Function) => {
-    this.client.on("disconnect", (reason) => {
-      console.log(`${this.clientName} disconnected`);
-      callback(reason);
+  public waitForDisconnect = (): Promise<void> => {
+    return new Promise((resolve) => {
+      this.client.on("disconnect", (reason) => {
+        console.log(`${this.clientName} disconnected`);
+        resolve();
+      });
     });
   };
 }

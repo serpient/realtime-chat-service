@@ -1,4 +1,6 @@
-export const chatRooms = [
+import { ChatRoom } from "./types";
+
+export const chatRooms: ChatRoom[] = [
   {
     label: "Water Tribe",
     name: "/waterTribe",
@@ -16,3 +18,7 @@ export const chatRooms = [
     name: "/airNation",
   },
 ];
+
+export const chatRoomIsValid = (incomingChatRoom: ChatRoom): boolean => {
+  return Boolean(chatRooms.find((room) => room.name === incomingChatRoom.name));
+};
