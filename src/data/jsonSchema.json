@@ -21,21 +21,33 @@
       "$id": "#IncomingMessage",
       "type": "object",
       "properties": {
+        "username": {
+          "type": "string"
+        },
         "message": {
+          "type": "string"
+        },
+        "uuid": {
           "type": "string"
         },
         "chatRoom": {
           "$ref": "common#/definitions/ChatRoom"
         }
       },
-      "required": ["message", "chatRoom"],
+      "required": ["username", "message", "uuid", "chatRoom"],
       "additionalProperties": false
     },
     "OutgoingMessageData": {
       "$id": "#OutgoingMessageData",
       "type": "object",
       "properties": {
+        "username": {
+          "type": "string"
+        },
         "message": {
+          "type": "string"
+        },
+        "uuid": {
           "type": "string"
         },
         "chatRoom": {
@@ -45,7 +57,13 @@
           "type": "string"
         }
       },
-      "required": ["chatRoom", "message", "serverTimestamp"],
+      "required": [
+        "chatRoom",
+        "message",
+        "serverTimestamp",
+        "username",
+        "uuid"
+      ],
       "additionalProperties": false
     },
     "OutgoingErrorData": {
@@ -113,18 +131,36 @@
       "required": ["username", "avatar", "currentRoom"],
       "additionalProperties": false
     },
+    "OutgoingUserInfo": {
+      "$id": "#OutgoingUserInfo",
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        }
+      },
+      "required": ["username", "avatar"],
+      "additionalProperties": false
+    },
+    "UsersPerRoom": {
+      "$id": "#UsersPerRoom",
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "common#/definitions/OutgoingUserInfo"
+        }
+      }
+    },
     "OutgoingPresenceData": {
       "$id": "#OutgoingPresenceData",
       "type": "object",
       "properties": {
         "usersPerRoom": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "$ref": "common#/definitions/IncomingUserInfo"
-            }
-          }
+          "$ref": "common#/definitions/UsersPerRoom"
         },
         "serverTimestamp": {
           "type": "string"

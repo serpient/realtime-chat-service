@@ -1,6 +1,5 @@
 import Ajv from "ajv";
 import jsonSchema from "./data/jsonSchema.json";
-import { ChatRoom } from "./data/types";
 import { chatRooms } from "./data/chatRooms";
 
 var ajv = new Ajv({ allErrors: true });

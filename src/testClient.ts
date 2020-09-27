@@ -1,7 +1,5 @@
 import io from "socket.io-client";
-import { OutgoingMessage, ChatRoom } from "./data/types";
-import { chatRooms } from "./data/chatRooms";
-import { chatRoomIsValid } from "./validation";
+import { OutgoingMessage } from "./data/types";
 import { events } from "./data/eventNames";
 
 export class TestClient {

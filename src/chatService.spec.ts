@@ -17,6 +17,8 @@ describe("Chat Service", () => {
   const message: IncomingMessage = {
     message: "Hello World",
     chatRoom,
+    uuid: "1234",
+    username: "bear_bear",
   };
 
   beforeEach(() => {
@@ -105,6 +107,8 @@ describe("Chat Service", () => {
     const message: IncomingMessage = {
       message: "Hello World",
       chatRoom,
+      uuid: "1234",
+      username: "bear_bear",
     };
 
     const client1 = new TestClient({
@@ -142,6 +146,8 @@ describe("Chat Service", () => {
   it("will send back error is message is missing required fields", async (done) => {
     const badMessage = {
       message: "Hello World",
+      username: "bear_bear",
+      uuid: "1234",
     };
     const client1 = new TestClient({
       chatServiceEndpoint,

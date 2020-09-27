@@ -7,17 +7,32 @@ it("validates valid incoming message", () => {
   expect(validateIncomingMessage({})).toEqual({
     isValid: false,
     errors: [
+      "should have required property 'username'",
       "should have required property 'message'",
+      "should have required property 'uuid'",
       "should have required property 'chatRoom'",
     ],
   });
 
-  expect(validateIncomingMessage({ message: "hello" })).toEqual({
+  expect(
+    validateIncomingMessage({
+      message: "hello",
+      username: "bear_bear",
+      uuid: "1234",
+    })
+  ).toEqual({
     isValid: false,
     errors: ["should have required property 'chatRoom'"],
   });
 
-  expect(validateIncomingMessage({ message: "hello", chatRoom: {} })).toEqual({
+  expect(
+    validateIncomingMessage({
+      message: "hello",
+      chatRoom: {},
+      username: "bear_bear",
+      uuid: "1234",
+    })
+  ).toEqual({
     isValid: false,
     errors: [
       "should have required property 'label'",
@@ -29,6 +44,8 @@ it("validates valid incoming message", () => {
     validateIncomingMessage({
       message: "hello",
       chatRoom: { label: "hi", name: "blah" },
+      username: "bear_bear",
+      uuid: "1234",
     })
   ).toEqual({
     isValid: true,

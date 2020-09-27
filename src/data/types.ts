@@ -4,7 +4,9 @@ export interface ChatRoom {
 }
 
 export interface IncomingMessage {
+  username: string;
   message: string;
+  uuid: string;
   chatRoom: ChatRoom;
 }
 
