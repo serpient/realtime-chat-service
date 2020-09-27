@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "common",
+  "type": "object",
+  "definitions": {
+    "ChatRoom": {
+      "$id": "#ChatRoom",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["label", "name"],
+      "additionalProperties": false
+    },
+    "IncomingMessage": {
+      "$id": "#IncomingMessage",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "chatRoom": {
+          "$ref": "common#/definitions/ChatRoom"
+        }
+      },
+      "required": ["message", "chatRoom"],
+      "additionalProperties": false
+    },
+    "OutgoingMessageData": {
+      "$id": "#OutgoingMessageData",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "chatRoom": {
+          "$ref": "common#/definitions/ChatRoom"
+        },
+        "serverTimestamp": {
+          "type": "string"
+        }
+      },
+      "required": ["chatRoom", "message", "serverTimestamp"],
+      "additionalProperties": false
+    },
+    "OutgoingErrorData": {
+      "$id": "#OutgoingErrorData",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "type": "number"
+        }
+      },
+      "required": ["message", "status"],
+      "additionalProperties": false
+    },
+    "OutgoingMessage": {
+      "$id": "#OutgoingMessage",
+      "type": "object",
+      "properties": {
+        "data": {
+          "anyOf": [
+            {
+              "$ref": "common#/definitions/OutgoingMessageData"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "common#/definitions/OutgoingErrorData"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["data", "error"],
+      "additionalProperties": false
+    }
+  }
+}

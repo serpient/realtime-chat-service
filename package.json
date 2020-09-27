@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest",
     "test:watch": "yarn test --watch",
+    "compileJson": "node src/convertToJsonSchema.ts",
     "start": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
   "repository": {
@@ -24,6 +25,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "socket.io": "^2.3.0",
+    "ts-json-schema-generator": "^0.74.0",
     "ts-node-dev": "^1.0.0-pre.63",
     "typescript": "^4.0.3"
   },
