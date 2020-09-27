@@ -5,6 +5,8 @@ import { chatRooms } from "./data/chatRooms";
 export class ChatService {
   public chatServer: SocketIO.Server;
   public newMessageEventName: string;
+  private server: http.Server;
+  private socket: SocketIO.Socket;
 
   constructor({
     port,
@@ -21,31 +23,39 @@ export class ChatService {
     newMessageEventName?: string;
   }) {
     this.newMessageEventName = newMessageEventName;
-    this.setupChatService(server, port, acceptableOrigins);
+    this.server = server;
+    this.setupChatService(port, acceptableOrigins);
     this.setupConnection();
   }
 
-  public close(callback: Function): void {
+  public close = (callback: Function): void => {
     this.chatServer.close(() => {
-      callback();
+      this.server.close(() => {
+        console.log("ChatServer & HTTP Server closed");
+        callback();
+      });
     });
-  }
+  };
 
-  private setupChatService(server, port, acceptableOrigins): void {
-    this.chatServer = io(server);
-    server.listen(port);
+  private setupChatService = (port, acceptableOrigins): void => {
+    this.chatServer = io(this.server);
+    this.server.listen(port);
     this.chatServer.origins((origin, callback) => {
       if (!acceptableOrigins.includes(origin)) {
         return callback("origin not allowed", false);
       }
       callback(null, true);
     });
+    this.chatServer.on("error", (err) => {
+      console.log(err);
+    });
     console.log(`Server is up and listening at ${port}`);
-  }
+  };
 
-  private setupConnection(): void {
+  private setupConnection = (): void => {
     this.chatServer.on("connection", (socket) => {
       console.log("Client has connected");
+      this.socket = socket;
 
       this.setupChatRooms(socket);
 
@@ -55,16 +65,15 @@ export class ChatService {
         console.log("client disconnected");
       });
     });
-  }
+  };
 
-  private setupChatRooms(socket: SocketIO.Socket): void {
+  private setupChatRooms = (socket: SocketIO.Socket): void => {
     chatRooms.forEach((room) => {
       socket.join(room.name);
-      console.log(`Creating chat room: [${room.name}]`);
     });
-  }
+  };
 
-  private handleIncomingMessages(socket: SocketIO.Socket): void {
+  private handleIncomingMessages = (socket: SocketIO.Socket): void => {
     // TODO handling of message that dont match schema
     socket.on(this.newMessageEventName, (data) => {
       console.log(data);
@@ -74,5 +83,5 @@ export class ChatService {
         serverTimestamp: new Date().toISOString(),
       });
     });
-  }
+  };
 }
