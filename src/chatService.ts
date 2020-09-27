@@ -30,24 +30,8 @@ export class ChatService {
     newMessageEventName?: string;
   }) {
     this.newMessageEventName = newMessageEventName;
-    this.server = server;
-    this.setupChatService(port, acceptableOrigins);
-    this.setupConnection();
     this.presenceInfo = {};
-  }
-
-  public close = (callback: Function): Promise<void> => {
-    return new Promise((resolve) => {
-      this.chatServer.close(() => {
-        this.server.close(() => {
-          console.log("ChatServer & HTTP Server closed");
-          resolve();
-        });
-      });
-    });
-  };
-
-  private setupChatService = (port, acceptableOrigins): void => {
+    this.server = server;
     this.chatServer = io(this.server);
     this.server.listen(port);
     this.chatServer.origins((origin, callback) => {
@@ -60,13 +44,25 @@ export class ChatService {
       console.log(err);
     });
     console.log(`Server is up and listening at ${port}`);
+    this.listenForNewClients();
+  }
+
+  public close = (): Promise<void> => {
+    return new Promise((resolve) => {
+      this.chatServer.close(() => {
+        this.server.close(() => {
+          console.log("ChatServer & HTTP Server closed");
+          resolve();
+        });
+      });
+    });
   };
 
-  private setupConnection = (): void => {
+  private listenForNewClients = (): void => {
     this.chatServer.on("connection", (client) => {
       console.log(`${client.id} has connected`);
 
-      this.setupChatRooms(client);
+      this.joinChatRooms(client);
 
       this.handleIncomingPresenceInfo(client);
 
@@ -86,7 +82,7 @@ export class ChatService {
     });
   };
 
-  private setupChatRooms = (client: SocketIO.Socket): void => {
+  private joinChatRooms = (client: SocketIO.Socket): void => {
     chatRooms.forEach((room) => {
       client.join(room.name);
     });
@@ -151,7 +147,7 @@ export class ChatService {
       const { isValid, errors } = validateIncomingMessage(data);
       if (isValid) {
         const { chatRoom } = data;
-        if (chatRoomIsValid(chatRoom)) {
+        if (chatRoomIsValid(chatRoom.name)) {
           this.chatServer.in(chatRoom.name).emit(chatRoom.name, {
             data: {
               ...data,

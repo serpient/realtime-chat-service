@@ -43,7 +43,7 @@ describe("Chat Service", () => {
     });
 
     client1.sendMessageToServer(message);
-    await client1.waitForMessageInChatRoom(chatRoom, 1);
+    await client1.waitForMessage(chatRoom.name, 1);
     expect(client1.receivedMessages[chatRoom.name][0].data.message).toEqual(
       message.message
     );
@@ -75,14 +75,14 @@ describe("Chat Service", () => {
     });
 
     client1.sendMessageToServer(message);
-    await client1.waitForMessageInChatRoom(chatRoom, 1);
-    await client2.waitForMessageInChatRoom(chatRoom, 1);
-    await client3.waitForMessageInChatRoom(chatRoom, 1);
+    await client1.waitForMessage(chatRoom.name, 1);
+    await client2.waitForMessage(chatRoom.name, 1);
+    await client3.waitForMessage(chatRoom.name, 1);
 
     client3.sendMessageToServer(message);
-    await client1.waitForMessageInChatRoom(chatRoom, 2);
-    await client2.waitForMessageInChatRoom(chatRoom, 2);
-    await client3.waitForMessageInChatRoom(chatRoom, 2);
+    await client1.waitForMessage(chatRoom.name, 2);
+    await client2.waitForMessage(chatRoom.name, 2);
+    await client3.waitForMessage(chatRoom.name, 2);
 
     expect(client3.receivedMessageCount).toEqual(2);
     expect(client2.receivedMessageCount).toEqual(2);
@@ -273,7 +273,6 @@ describe("Chat Service", () => {
       })
     );
 
-    // TODO Duplication is happening above
     expect(client1.receivedMessageCount).toEqual(3);
     expect(client2.receivedMessageCount).toEqual(3);
     expect(client3.receivedMessageCount).toEqual(3);
@@ -300,7 +299,7 @@ describe("Chat Service", () => {
         done();
       }
     );
-  }, 15000);
+  }, 10000);
 
   // it("can notify client when a user is typing", () => {});
 

@@ -53,52 +53,21 @@ export class TestClient {
       .on("connect", () => {
         console.log(`${this.clientName} connected`);
       });
-
-    chatRooms.forEach((room) => {
-      this.client.on(room.name, (data: any) => {
-        this.receivedMessageCount++;
-        this.handleSavingMessages(data, room.name);
-      });
-    });
   };
 
-  private handleSavingMessages = (
-    data: OutgoingMessage,
-    eventName: string
-  ): void => {
-    let messageForChatRoom = this.receivedMessages[eventName];
-    if (messageForChatRoom) {
-      this.receivedMessages[eventName] = [...messageForChatRoom, data];
-    } else {
-      this.receivedMessages[eventName] = [data];
-    }
+  public disconnectAndWait = (): Promise<void> => {
+    return new Promise((resolve) => {
+      this.client.once("disconnect", (reason) => {
+        console.log(`${this.clientName} disconnected`);
+        resolve();
+      });
+      this.client.disconnect();
+    });
   };
 
   public sendMessageToServer = (message: any, eventName?: string) => {
     console.log(`Sending message for ${this.clientName}`);
     this.client.emit(eventName || this.newMessageEventName, message);
-  };
-
-  public waitForMessageInChatRoom = (
-    chatRoom: ChatRoom,
-    messageNumber: number
-  ): Promise<void> => {
-    return new Promise((resolve) => {
-      this.client.once(chatRoom.name, (data) => {
-        console.log(
-          `Received message from ${chatRoom.name} for ${
-            this.clientName
-          }: [${JSON.stringify(data)}]`
-        );
-        if (!chatRoomIsValid(chatRoom)) {
-          this.receivedMessageCount++;
-          this.handleSavingMessages(data, chatRoom.name);
-        }
-        if (this.receivedMessageCount >= messageNumber) {
-          resolve();
-        }
-      });
-    });
   };
 
   public waitForMessage = (
@@ -121,13 +90,15 @@ export class TestClient {
     });
   };
 
-  public disconnectAndWait = (): Promise<void> => {
-    return new Promise((resolve) => {
-      this.client.once("disconnect", (reason) => {
-        console.log(`${this.clientName} disconnected`);
-        resolve();
-      });
-      this.client.disconnect();
-    });
+  private handleSavingMessages = (
+    data: OutgoingMessage,
+    eventName: string
+  ): void => {
+    let messageForChatRoom = this.receivedMessages[eventName];
+    if (messageForChatRoom) {
+      this.receivedMessages[eventName] = [...messageForChatRoom, data];
+    } else {
+      this.receivedMessages[eventName] = [data];
+    }
   };
 }

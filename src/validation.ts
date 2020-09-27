@@ -34,6 +34,6 @@ const handleValidation = (
   }
 };
 
-export const chatRoomIsValid = (incomingChatRoom: ChatRoom): boolean => {
-  return Boolean(chatRooms.find((room) => room.name === incomingChatRoom.name));
+export const chatRoomIsValid = (incomingChatRoomName: string): boolean => {
+  return Boolean(chatRooms.find((room) => room.name === incomingChatRoomName));
 };
