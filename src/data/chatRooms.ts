@@ -2,19 +2,19 @@ import { ChatRoom } from "./types";
 
 export const chatRooms: ChatRoom[] = [
   {
-    label: "Water Tribe",
-    name: "/waterTribe",
+    label: "Cooking",
+    name: "/cooking",
   },
   {
-    label: "Earth Kingdom",
-    name: "/earthKingdom",
+    label: "$$Money$$",
+    name: "/money",
   },
   {
-    label: "Fire Nation",
-    name: "/fireNation",
+    label: "Traveling",
+    name: "/travel",
   },
   {
-    label: "Air Nation",
-    name: "/airNation",
+    label: "Damn Cute Fur Babies",
+    name: "/pets",
   },
 ];

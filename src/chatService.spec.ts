@@ -13,7 +13,7 @@ describe("Chat Service", () => {
   const connectOptions = {
     forceNew: true,
   };
-  const chatRoom: ChatRoom = { label: "Water Tribe", name: "/waterTribe" };
+  const chatRoom: ChatRoom = { label: "Cooking", name: "/cooking" };
   const message: IncomingMessage = {
     message: "Hello World",
     chatRoom,
@@ -196,8 +196,8 @@ describe("Chat Service", () => {
       username: "client1",
       avatar: "image link",
       currentRoom: {
-        label: "Water Tribe",
-        name: "/waterTribe",
+        label: "Cooking",
+        name: "/cooking",
       },
     };
     client1.sendMessageToServer(
@@ -212,10 +212,10 @@ describe("Chat Service", () => {
     ).toEqual(
       expect.objectContaining({
         usersPerRoom: {
-          "/waterTribe": [{ username: "client1", avatar: "image link" }],
-          "/earthKingdom": [],
-          "/fireNation": [],
-          "/airNation": [],
+          "/cooking": [{ username: "client1", avatar: "image link" }],
+          "/money": [],
+          "/travel": [],
+          "/pets": [],
         },
       })
     );
@@ -225,7 +225,7 @@ describe("Chat Service", () => {
       avatar: "image link",
       currentRoom: {
         label: "Earth Kingdom",
-        name: "/earthKingdom",
+        name: "/money",
       },
     };
     client2.sendMessageToServer(
@@ -240,10 +240,10 @@ describe("Chat Service", () => {
     ).toEqual(
       expect.objectContaining({
         usersPerRoom: {
-          "/waterTribe": [{ username: "client1", avatar: "image link" }],
-          "/earthKingdom": [{ username: "client2", avatar: "image link" }],
-          "/fireNation": [],
-          "/airNation": [],
+          "/cooking": [{ username: "client1", avatar: "image link" }],
+          "/money": [{ username: "client2", avatar: "image link" }],
+          "/travel": [],
+          "/pets": [],
         },
       })
     );
@@ -253,7 +253,7 @@ describe("Chat Service", () => {
       avatar: "image link",
       currentRoom: {
         label: "Earth Kingdom",
-        name: "/earthKingdom",
+        name: "/money",
       },
     };
     client3.sendMessageToServer(
@@ -268,13 +268,13 @@ describe("Chat Service", () => {
     ).toEqual(
       expect.objectContaining({
         usersPerRoom: {
-          "/waterTribe": [{ username: "client1", avatar: "image link" }],
-          "/earthKingdom": [
+          "/cooking": [{ username: "client1", avatar: "image link" }],
+          "/money": [
             { username: "client2", avatar: "image link" },
             { username: "client3", avatar: "image link" },
           ],
-          "/fireNation": [],
-          "/airNation": [],
+          "/travel": [],
+          "/pets": [],
         },
       })
     );
@@ -292,10 +292,10 @@ describe("Chat Service", () => {
     ).toEqual(
       expect.objectContaining({
         usersPerRoom: {
-          "/waterTribe": [{ username: "client1", avatar: "image link" }],
-          "/earthKingdom": [{ username: "client2", avatar: "image link" }],
-          "/fireNation": [],
-          "/airNation": [],
+          "/cooking": [{ username: "client1", avatar: "image link" }],
+          "/money": [{ username: "client2", avatar: "image link" }],
+          "/travel": [],
+          "/pets": [],
         },
       })
     );
