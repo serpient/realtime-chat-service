@@ -18,7 +18,3 @@ export const chatRooms: ChatRoom[] = [
     name: "/airNation",
   },
 ];
-
-export const chatRoomIsValid = (incomingChatRoom: ChatRoom): boolean => {
-  return Boolean(chatRooms.find((room) => room.name === incomingChatRoom.name));
-};

@@ -1,6 +1,7 @@
 import io from "socket.io-client";
 import { OutgoingMessage, ChatRoom } from "./data/types";
-import { chatRooms, chatRoomIsValid } from "./data/chatRooms";
+import { chatRooms } from "./data/chatRooms";
+import { chatRoomIsValid } from "./validation";
 
 export class TestClient {
   public client: SocketIOClient.Socket;

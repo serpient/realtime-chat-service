@@ -1,7 +1,8 @@
 import io from "socket.io";
 import * as http from "http";
-import { chatRooms, chatRoomIsValid } from "./data/chatRooms";
+import { chatRooms } from "./data/chatRooms";
 import { IncomingMessage } from "./data/types";
+import { validateIncomingMessage, chatRoomIsValid } from "./validation";
 
 export class ChatService {
   public chatServer: SocketIO.Server;
@@ -77,27 +78,49 @@ export class ChatService {
   };
 
   private handleIncomingMessages = (socket: SocketIO.Socket): void => {
-    // TODO handling of message that dont match schema
     socket.on(this.newMessageEventName, (data: IncomingMessage) => {
       console.log(data);
-      const { chatRoom } = data;
-      if (chatRoomIsValid(chatRoom)) {
-        this.chatServer.in(chatRoom.name).emit(chatRoom.name, {
-          data: {
-            ...data,
-            serverTimestamp: new Date().toISOString(),
-          },
-          error: null,
-        });
-      } else {
-        this.chatServer.emit("server_error", {
-          data: null,
-          error: {
-            status: 404,
+      const { isValid, errors } = validateIncomingMessage(data);
+      if (isValid) {
+        const { chatRoom } = data;
+        if (chatRoomIsValid(chatRoom)) {
+          this.chatServer.in(chatRoom.name).emit(chatRoom.name, {
+            data: {
+              ...data,
+              serverTimestamp: new Date().toISOString(),
+            },
+            error: null,
+          });
+        } else {
+          this.sendBackError({
             message: "Chat room does not exist",
-          },
+          });
+        }
+      } else {
+        this.sendBackError({
+          message: "Incoming message is not valid",
+          errors,
         });
       }
+    });
+  };
+
+  private sendBackError = ({
+    status = 404,
+    message,
+    errors = [],
+  }: {
+    status?: number;
+    message: string;
+    errors?: string[];
+  }): void => {
+    this.chatServer.emit("server_error", {
+      data: null,
+      error: {
+        status,
+        message,
+        errors,
+      },
     });
   };
 }

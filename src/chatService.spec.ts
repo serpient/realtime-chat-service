@@ -157,8 +157,9 @@ describe("Chat Service", () => {
     await client1.waitForMessageInChatRoom(errorListenerRoom, 1);
     expect(client1.receivedMessages[errorListener][0]).toEqual({
       error: {
-        message: "The message is missing required fields",
+        message: "Incoming message is not valid",
         status: 404,
+        errors: ["should have required property 'chatRoom'"],
       },
       data: null,
     });
@@ -169,13 +170,9 @@ describe("Chat Service", () => {
     });
   });
 
-  // it("notifies all users when a new user connects", () => {});
-
-  // it("can handle bad received messages", () => {});
+  // it("can notify client when a user is typing", () => {});
 
   // it("can handle sending back a copy of messages before the user joined for a given chat room", () => {});
-
-  // it("can notify client when a user is typing", () => {});
 
   // it("can show which room other users are in", () => {});
 });

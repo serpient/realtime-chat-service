@@ -15,6 +15,7 @@ export interface OutgoingMessageData extends IncomingMessage {
 export interface OutgoingErrorData {
   message: string;
   status: number;
+  errors?: string[];
 }
 
 export interface OutgoingMessage {

@@ -57,6 +57,12 @@
         },
         "status": {
           "type": "number"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": ["message", "status"],

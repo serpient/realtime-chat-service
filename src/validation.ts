@@ -1,5 +1,7 @@
 import Ajv from "ajv";
 import jsonSchema from "./data/jsonSchema.json";
+import { ChatRoom } from "./data/types";
+import { chatRooms } from "./data/chatRooms";
 
 var ajv = new Ajv({ allErrors: true });
 var validate = ajv.addSchema(jsonSchema, "all");
@@ -16,4 +18,8 @@ export const validateIncomingMessage = (
   } else {
     return { isValid: true, errors: [] };
   }
+};
+
+export const chatRoomIsValid = (incomingChatRoom: ChatRoom): boolean => {
+  return Boolean(chatRooms.find((room) => room.name === incomingChatRoom.name));
 };
