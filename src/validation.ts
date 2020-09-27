@@ -6,10 +6,24 @@ import { chatRooms } from "./data/chatRooms";
 var ajv = new Ajv({ allErrors: true });
 var validate = ajv.addSchema(jsonSchema, "all");
 
-export const validateIncomingMessage = (
-  data: any
-): { isValid: boolean; errors: string[] } => {
+type ValidationResult = {
+  isValid: boolean;
+  errors: string[];
+};
+
+export const validateIncomingMessage = (data: any): ValidationResult => {
   const valid = ajv.validate("common#IncomingMessage", data);
+  return handleValidation(valid);
+};
+
+export const validateIncomingUserInfo = (data: any): ValidationResult => {
+  const valid = ajv.validate("common#IncomingUserInfo", data);
+  return handleValidation(valid);
+};
+
+const handleValidation = (
+  valid: boolean | PromiseLike<any>
+): ValidationResult => {
   if (!valid) {
     return {
       isValid: false,

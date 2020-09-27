@@ -95,6 +95,71 @@
       },
       "required": ["data", "error"],
       "additionalProperties": false
+    },
+    "IncomingUserInfo": {
+      "$id": "#IncomingUserInfo",
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "currentRoom": {
+          "$ref": "common#/definitions/ChatRoom"
+        }
+      },
+      "required": ["username", "avatar", "currentRoom"],
+      "additionalProperties": false
+    },
+    "OutgoingPresenceData": {
+      "$id": "#OutgoingPresenceData",
+      "type": "object",
+      "properties": {
+        "usersPerRoom": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "common#/definitions/IncomingUserInfo"
+            }
+          }
+        },
+        "serverTimestamp": {
+          "type": "string"
+        }
+      },
+      "required": ["usersPerRoom", "serverTimestamp"],
+      "additionalProperties": false
+    },
+    "OutgoingPresenceInformation": {
+      "$id": "#OutgoingPresenceInformation",
+      "type": "object",
+      "properties": {
+        "data": {
+          "anyOf": [
+            {
+              "$ref": "common#/definitions/OutgoingPresenceData"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "common#/definitions/OutgoingErrorData"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["data", "error"],
+      "additionalProperties": false
     }
   }
 }

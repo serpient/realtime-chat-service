@@ -1,14 +1,19 @@
 import io from "socket.io";
 import * as http from "http";
 import { chatRooms } from "./data/chatRooms";
-import { IncomingMessage } from "./data/types";
-import { validateIncomingMessage, chatRoomIsValid } from "./validation";
+import { IncomingMessage, IncomingUserInfo, UsersPerRoom } from "./data/types";
+import {
+  validateIncomingMessage,
+  chatRoomIsValid,
+  validateIncomingUserInfo,
+} from "./validation";
+import { events } from "./data/eventNames";
 
 export class ChatService {
   public chatServer: SocketIO.Server;
   public newMessageEventName: string;
   private server: http.Server;
-  private socket: SocketIO.Socket;
+  private presenceInfo: { [socketId: string]: IncomingUserInfo };
 
   constructor({
     port,
@@ -17,7 +22,7 @@ export class ChatService {
       "https://clever-aryabhata-d8e12c.netlify.app",
       "http://localhost:3000",
     ],
-    newMessageEventName = "new_message",
+    newMessageEventName = events.NEW_MESSAGE,
   }: {
     port: number;
     server: http.Server;
@@ -28,6 +33,7 @@ export class ChatService {
     this.server = server;
     this.setupChatService(port, acceptableOrigins);
     this.setupConnection();
+    this.presenceInfo = {};
   }
 
   public close = (callback: Function): Promise<void> => {
@@ -57,24 +63,86 @@ export class ChatService {
   };
 
   private setupConnection = (): void => {
-    this.chatServer.on("connection", (socket) => {
-      console.log("Client has connected");
-      this.socket = socket;
+    this.chatServer.on("connection", (client) => {
+      console.log(`${client.id} has connected`);
 
-      this.setupChatRooms(socket);
+      this.setupChatRooms(client);
 
-      this.handleIncomingMessages(socket);
+      this.handleIncomingPresenceInfo(client);
 
-      socket.on("disconnect", () => {
-        console.log("client disconnected");
-      });
+      this.handleIncomingMessages(client);
+
+      client
+        .on("error", (err) => {
+          console.log(err);
+        })
+        .on("disconnect", () => {
+          console.log(`Client ${client.id} disconnected`);
+          this.removeUserFromPresenceInfo(client.id);
+        })
+        .on("disconnecting", (reason) => {
+          console.log(`Client ${client.id} disconnecting because of ${reason}`);
+        });
     });
   };
 
-  private setupChatRooms = (socket: SocketIO.Socket): void => {
+  private setupChatRooms = (client: SocketIO.Socket): void => {
     chatRooms.forEach((room) => {
-      socket.join(room.name);
+      client.join(room.name);
     });
+  };
+
+  private removeUserFromPresenceInfo = (clientId: string): void => {
+    delete this.presenceInfo[clientId];
+    this.emitPresenceInfo();
+  };
+
+  private handleIncomingPresenceInfo = (socket: SocketIO.Socket): void => {
+    socket.on(events.NEW_PRESENCE_INFORMATION, (data) => {
+      const { isValid, errors } = validateIncomingUserInfo(data);
+      if (isValid) {
+        const currentStoredInfo = this.presenceInfo[socket.id];
+        if (
+          !currentStoredInfo ||
+          currentStoredInfo.currentRoom.name !== data.currentRoom.name
+        ) {
+          this.presenceInfo[socket.id] = data;
+          this.emitPresenceInfo();
+        } else {
+          this.presenceInfo[socket.id] = data;
+        }
+      } else {
+        console.log("not valid");
+        this.sendBackError({
+          message: "Incoming user info is not valid",
+          errors,
+        });
+      }
+    });
+  };
+
+  private emitPresenceInfo = (): void => {
+    this.chatServer.emit(events.PRESENCE_INFORMATION, {
+      data: {
+        usersPerRoom: this.createPresenceInfoPerRoom(),
+        serverTimestamp: new Date().toISOString(),
+      },
+      error: null,
+    });
+  };
+
+  private createPresenceInfoPerRoom = (): UsersPerRoom => {
+    const presenceInfoPerRoom = {};
+    chatRooms.forEach((room) => {
+      presenceInfoPerRoom[room.name] = [];
+    });
+    Object.values(this.presenceInfo).forEach((info) => {
+      const { username, avatar } = info;
+      if (presenceInfoPerRoom[info.currentRoom.name]) {
+        presenceInfoPerRoom[info.currentRoom.name].push({ username, avatar });
+      }
+    });
+    return presenceInfoPerRoom;
   };
 
   private handleIncomingMessages = (socket: SocketIO.Socket): void => {
@@ -114,7 +182,7 @@ export class ChatService {
     message: string;
     errors?: string[];
   }): void => {
-    this.chatServer.emit("server_error", {
+    this.chatServer.emit(events.ERROR, {
       data: null,
       error: {
         status,

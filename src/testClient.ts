@@ -2,6 +2,7 @@ import io from "socket.io-client";
 import { OutgoingMessage, ChatRoom } from "./data/types";
 import { chatRooms } from "./data/chatRooms";
 import { chatRoomIsValid } from "./validation";
+import { events } from "./data/eventNames";
 
 export class TestClient {
   public client: SocketIOClient.Socket;
@@ -12,7 +13,7 @@ export class TestClient {
 
   constructor({
     chatServiceEndpoint,
-    newMessageEventName = "new_message",
+    newMessageEventName = events.NEW_MESSAGE,
     connectOptions = {},
     clientName,
   }: {
@@ -56,26 +57,26 @@ export class TestClient {
     chatRooms.forEach((room) => {
       this.client.on(room.name, (data: any) => {
         this.receivedMessageCount++;
-        this.handleSavingMessages(data, room);
+        this.handleSavingMessages(data, room.name);
       });
     });
   };
 
   private handleSavingMessages = (
     data: OutgoingMessage,
-    chatRoom: ChatRoom
+    eventName: string
   ): void => {
-    let messageForChatRoom = this.receivedMessages[chatRoom.name];
+    let messageForChatRoom = this.receivedMessages[eventName];
     if (messageForChatRoom) {
-      this.receivedMessages[chatRoom.name] = [...messageForChatRoom, data];
+      this.receivedMessages[eventName] = [...messageForChatRoom, data];
     } else {
-      this.receivedMessages[chatRoom.name] = [data];
+      this.receivedMessages[eventName] = [data];
     }
   };
 
-  public sendMessageToServer = (message: any) => {
+  public sendMessageToServer = (message: any, eventName?: string) => {
     console.log(`Sending message for ${this.clientName}`);
-    this.client.emit(this.newMessageEventName, message);
+    this.client.emit(eventName || this.newMessageEventName, message);
   };
 
   public waitForMessageInChatRoom = (
@@ -83,7 +84,7 @@ export class TestClient {
     messageNumber: number
   ): Promise<void> => {
     return new Promise((resolve) => {
-      this.client.on(chatRoom.name, (data) => {
+      this.client.once(chatRoom.name, (data) => {
         console.log(
           `Received message from ${chatRoom.name} for ${
             this.clientName
@@ -91,25 +92,42 @@ export class TestClient {
         );
         if (!chatRoomIsValid(chatRoom)) {
           this.receivedMessageCount++;
-          this.handleSavingMessages(data, chatRoom);
+          this.handleSavingMessages(data, chatRoom.name);
         }
-        if (this.receivedMessageCount === messageNumber) {
+        if (this.receivedMessageCount >= messageNumber) {
           resolve();
         }
       });
     });
   };
 
-  public disconnect = () => {
-    this.client.disconnect();
+  public waitForMessage = (
+    eventName: string,
+    messageNumber: number
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      this.client.once(eventName, (data) => {
+        console.log(
+          `Received message from ${eventName} for ${
+            this.clientName
+          }: [${JSON.stringify(data)}]`
+        );
+        this.receivedMessageCount++;
+        this.handleSavingMessages(data, eventName);
+        if (this.receivedMessageCount >= messageNumber) {
+          resolve();
+        }
+      });
+    });
   };
 
-  public waitForDisconnect = (): Promise<void> => {
+  public disconnectAndWait = (): Promise<void> => {
     return new Promise((resolve) => {
-      this.client.on("disconnect", (reason) => {
+      this.client.once("disconnect", (reason) => {
         console.log(`${this.clientName} disconnected`);
         resolve();
       });
+      this.client.disconnect();
     });
   };
 }
