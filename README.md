@@ -32,7 +32,7 @@ serverEndpoint=`https://realtime-chat-service.herokuapp.com`
 
 Application is deployed and can be played with here: [https://realtime-chat-service.herokuapp.com/](https://realtime-chat-service.herokuapp.com/).
 
-The project utilities github actions to handle running tests with each commit. Heroku handles the automatic deployment.
+The project uses github actions to handle running tests with each commit. Heroku handles the automatic deployment.
 
 ## Technical Stack
 
@@ -44,7 +44,7 @@ The project utilizes:
 - Jest
 - ajv & ts-json-schema-generator. This flow of `typescript types -> json-schema -> validators` was used to automate the creation of type validators for validating incoming data from the client
 
-- ChatService class handles all socket-server handling.
+- ChatService class handles all server-socket handling.
 - There is a TestClient which was created for the ChatService e2e tests. It is almost identical to the ChatClient on the frontend, other than a few test helper functions.
 
 #### Current Features
